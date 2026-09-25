@@ -79,7 +79,14 @@ func (c *Coordinator) RunOnce(ctx context.Context) (int, error) {
 }
 
 // RunLoop polls until ctx is cancelled (for long-running Cloud Run services).
+// An interval <= 0 disables autonomous polling; orders are then processed only
+// on demand (e.g. via the /run-cycle endpoint or GraphQL mutation).
 func (c *Coordinator) RunLoop(ctx context.Context, interval time.Duration) {
+	if interval <= 0 {
+		slog.Info("agent: autonomous polling disabled (POLL_SECONDS <= 0)")
+		<-ctx.Done()
+		return
+	}
 	t := time.NewTicker(interval)
 	defer t.Stop()
 	for {
