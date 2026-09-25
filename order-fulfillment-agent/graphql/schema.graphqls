@@ -1,0 +1,62 @@
+# Reference GraphQL contract exposed by the agent at POST /graphql
+# (implemented in internal/server/graphql.go; also loadable into Hasura
+# as a Postgres-backed API or WunderGraph supergraph).
+
+scalar DateTime
+
+enum OrderStatus { new processing shipped failed on_hold }
+
+input OrderItemInput { sku: String!, quantity: Int! }
+
+type OrderItem { sku: String!, quantity: Int! }
+
+type Order {
+  id: ID!
+  customerId: String!
+  items: [OrderItem!]!
+  status: OrderStatus!
+  trackingNumber: String
+  fulfillmentNotes: String
+  errorMsg: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  shippedAt: DateTime
+}
+
+type FulfillmentEvent {
+  id: Int!
+  orderId: ID!
+  step: String!
+  success: Boolean!
+  detail: String
+  timestamp: DateTime!
+}
+
+type MetricsSummary {
+  totalOrders: Int!
+  autoProcessed: Int!
+  automationRatePct: Float!
+  avgProcessingSeconds: Float!
+  failedAttempts: Int!
+  errorRatePct: Float!
+  manualMinutesPerOrder: Float!
+  hoursSaved: Float!
+  estimatedCostSavedUsd: Float!
+}
+
+type LabelResult { trackingNumber: String!, carrier: String!, labelUrl: String }
+type GiveawayResult { eligible: Boolean!, item: String, reason: String }
+
+type Query {
+  order(id: ID!): Order
+  orders(status: String = "new", limit: Int = 50): [Order!]!   # status="" or "all" returns every order
+  orderEvents(orderId: ID!): [FulfillmentEvent!]!
+  metrics(manualMinutesPerOrder: Float = 6, hourlyCostUsd: Float = 25): MetricsSummary!
+}
+
+type Mutation {
+  createOrder(customerId: String!, items: [OrderItemInput!]!): Order!
+  processPendingOrders: Int!                       # trigger one autonomous cycle
+  generateShippingLabel(orderId: ID!): LabelResult  # Ship platform tool
+  checkGiveawayEligibility(customerId: String!): GiveawayResult # Give platform tool
+}

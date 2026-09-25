@@ -1,0 +1,11 @@
+{
+  "description": "Offline regression dataset consumed by internal/agent scenario tests and CI. Each scenario pins stock levels and the expected terminal order status.",
+  "stock": {"SKU-A": 100, "SKU-B": 50, "SKU-OOS": 0},
+  "giveaway_rule": {"eligible_every_nth_customer": 3, "bonus_item": "sample pack"},
+  "scenarios": [
+    {"name": "happy path",            "customer": "cust-001", "items": [{"sku": "SKU-A", "quantity": 10}],          "expected_status": "shipped"},
+    {"name": "giveaway eligible",     "customer": "cust-003", "items": [{"sku": "SKU-B", "quantity": 2}],           "expected_status": "shipped", "expected_note_contains": "Include bonus item"},
+    {"name": "out of stock -> hold",  "customer": "cust-007", "items": [{"sku": "SKU-OOS", "quantity": 1}],         "expected_status": "on_hold"},
+    {"name": "multi-line partial OOS","customer": "cust-005", "items": [{"sku": "SKU-A", "quantity": 1}, {"sku": "SKU-OOS", "quantity": 3}], "expected_status": "on_hold"}
+  ]
+}
